@@ -1,0 +1,6 @@
+.DS_Store
+*.Rproj
+*.qgz
+.Rdata
+.Rhistory
+.Rproj*
