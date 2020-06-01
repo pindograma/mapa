@@ -4,8 +4,6 @@
 # This program is licensed under the GNU General Public License, version 3.
 # See the LICENSE file for details.
 
-filter(!(ENDERECO %in% gall$ENDERECO))
-
 generate_addr_export = function(addrs) {
     addrs$norm = normalize_simple(addrs$ENDERECO)
     addrs %>%
@@ -30,6 +28,9 @@ generate_addr_export = function(addrs) {
                !grepl('^BAIRRO', norm) &
                !grepl('^COLONIA', norm) &
                !grepl('^FAZENDA', norm) &
+               !grepl('^VILA', norm) &
+               !grepl('^BAIRRO', norm) &
+               !grepl('^LINHA', norm) &
                !grepl('^ASSENTAMENTO', norm)) %>%
         select(ID, ENDERECO, BAIRRO_LOCAL_VOT, LOCALIDADE_LOCAL_VOTACAO, SGL_UF)
 }
