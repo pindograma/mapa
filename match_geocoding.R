@@ -4,6 +4,7 @@
 # This program is licensed under the GNU General Public License, version 3.
 # See the LICENSE file for details.
 
+# Imports
 library(readr)
 library(stringi)
 library(dplyr)
@@ -13,12 +14,13 @@ library(sqldf)
 library(purrr)
 library(furrr)
 
-options('sqldf.dll' = '/home/arch/spellfix.so')
-plan(multiprocess)
-
 source('cnefe_matcher.R')
 source('inep_matcher.R')
 source('google_matcher.R')
+
+# Configuration
+options('sqldf.dll' = '/home/arch/spellfix.so')
+plan(multiprocess)
 
 local_2018 <- read_delim("local-votacao-08-08-2018.csv", 
     ";", escape_double = FALSE,
@@ -61,9 +63,11 @@ escolas_geocoded_inep$norm_cidade = normalize_simple(escolas_geocoded_inep$`Muni
 escolas_geocoded_inep$norm_escola_t = future_map(escolas_geocoded_inep$Escola, normalize_school_name) %>%
     unlist()
 
+tic()
 inep = run_inep_match(
     local_2018_f %>% filter(SGL_UF != 'DF'),
     escolas_geocoded_inep)
+toc()
 
 conflicts_solved = read_csv("solve_backup.csv")
 sc_stage1 = inner_join(
@@ -73,8 +77,7 @@ sc_stage1 = inner_join(
 sc = inner_join(
     sc_stage1,
     escolas_geocoded_inep,
-    by=c('SGL_UF'='UF', 'norm_cidade.x'='norm_cidade', 'Escola'='Escola')) %>%
-        rename(norm_cidade = norm_cidade.x) %>%
+    by=c('SGL_UF'='UF', 'norm_cidade'='norm_cidade', 'Escola'='Escola')) %>%
         rename(inep_lat = Latitude) %>%
         rename(inep_lon = Longitude) %>%
         remove_ambiguities()
@@ -130,7 +133,10 @@ rm(cnefe_all)
 
 matched = bind_rows(
     local_2018_f %>% filter(!is.na(LATITUDE_LOCAL) & !is.na(LONGITUDE_LOCAL)),
-    inep %>% filter(!is.na(inep_lat) & !is.na(inep_lon)),
+    inner_join(
+        local_2018_f,
+        inep %>% filter(!is.na(inep_lat) & !is.na(inep_lon)),
+        by = c('ID' = 'ID')),
     cnefe_pl,
     cnefe_addr,
     sc %>% filter(!is.na(inep_lat) & !is.na(inep_lon))
