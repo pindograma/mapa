@@ -124,7 +124,7 @@ normalize_cnefe = function(cnefe) {
 
 generate_cnefe_p = function(cnefe) {
     cnefe_p = cnefe %>%
-        group_by(compati, TipoLogradouro, norm_tit, norm_nl, Localidade, CodSetor, cep) %>%
+        group_by(compati, TipoLogradouro, norm_tit, norm_nl, Localidade, Distrito, Subdistrito, CodSetor, cep) %>%
         summarize() %>%
         ungroup()
     cnefe_p$TipoLogradouro = str_replace_all(cnefe_p$TipoLogradouro, '0', 'O') %>% str_squish()
@@ -452,10 +452,10 @@ run_placename_match = function(tg, cnefe) {
     )) %>% remove_ambiguities()
 
     l = list(round1, round1_1, round2, round3, round3_1, round4, round5, round5_1)
-    map_dfr(l, select, -contains('cep'))
-        rename(cnefe_lat = Lat) %>%
-        rename(cnefe_lon = Lon) %>%
-        select(ID, IdEstabelecimento, CodSetor, cnefe_lat, cnefe_lon)
+    map_dfr(l, select, -contains('cep')) %>%
+        rename(pl_lat = Lat, pl_lon = Lon) %>%
+        rename(pl_Distrito = Distrito, pl_Subdistrito = Subdistrito, pl_CodSetor = CodSetor) %>%
+        select(ID, IdEstabelecimento, pl_lat, pl_lon, pl_Distrito, pl_Subdistrito, pl_CodSetor)
 }
 
 run_address_match = function(tg, cnefe) {
@@ -495,7 +495,7 @@ run_address_match = function(tg, cnefe) {
 
     l = list(round1, round2, round3, round4, round5, round6, round7)
     map_dfr(l, select, -contains('cep')) %>%
-        rename(cnefe_lat = Lat) %>%
-        rename(cnefe_lon = Lon) %>%
-        select(ID, TipoLogradouro, TituloLogrdouro, NomeLogradouro, NumeroLogradouro, CodSetor, cnefe_lat, cnefe_lon)
+        rename(ad_lat = Lat, ad_lon = Lon) %>%
+        rename(ad_Distrito = Distrito, ad_Subdistrito = Subdistrito, ad_CodSetor = CodSetor) %>%
+        select(ID, TipoLogradouro, norm_tit, norm_nl, ad_lat, ad_lon, ad_Distrito, ad_Subdistrito, ad_CodSetor)
 }
