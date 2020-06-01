@@ -2,6 +2,7 @@ import json
 import csv
 import re
 from unidecode import unidecode
+from sys import argv
 
 def write_csv(f, data):
     keys = data[0].keys()
@@ -10,7 +11,7 @@ def write_csv(f, data):
     dict_writer.writerows(data)
 
 oup = []
-with open('google-places-output/ba_corrected.json') as f:
+with open(argv[1]) as f:
     entries = json.load(f)
 
     i = 0
@@ -55,6 +56,7 @@ with open('google-places-output/ba_corrected.json') as f:
                 good = False
 
             oup.append({
+                'ID': g['ID'],
                 'placename': g['placename'],
                 'found': d['name'],
                 'endr_orig': endr_orig,

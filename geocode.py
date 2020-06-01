@@ -10,12 +10,14 @@ import pprint
 import re
 import json
 from unidecode import unidecode
+from sys import argv
+from pathlib import Path
 
 ak = 'AIzaSyBQJS1WsLDzpET0-a57HZ7yOpUu-MfKEGE'
 gmaps = googlemaps.Client(key = ak)
 
 oup = []
-with open('EXPORT_GOOGLE_ADDR_NF.csv') as f:
+with open(argv[1]) as f:
     addrs = [{k: v for k, v in row.items()}
         for row in csv.DictReader(f, skipinitialspace=True)]
 
@@ -70,5 +72,6 @@ with open('EXPORT_GOOGLE_ADDR_NF.csv') as f:
             print(e)
             break
 
-with open('g_geocoder_output.json', 'w') as f:
+json.dump(oup, open('backup.json', 'w'))
+with open(Path(argv[1]).stem + '.json', 'w') as f:
     json.dump(oup, f)

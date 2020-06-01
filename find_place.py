@@ -9,13 +9,14 @@ import csv
 import json
 from unidecode import unidecode
 from time import sleep
+from sys import argv
 
 ak = 'AIzaSyBQJS1WsLDzpET0-a57HZ7yOpUu-MfKEGE'
 gmaps = googlemaps.Client(key = ak)
 
 oup = []
 
-with open('test_placename_sp.csv') as f:
+with open(argv[1]) as f:
     addrs = [{k: v for k, v in row.items()}
         for row in csv.DictReader(f, skipinitialspace=True)]
 
@@ -42,9 +43,10 @@ with open('test_placename_sp.csv') as f:
             ])
 
             oup.append({
+                'ID': addr['ID'],
                 'placename_orig': placename_orig,
                 'placename': pname,
-                'endr_orig': addr['norm_endr'],
+                'endr_orig': addr['ENDERECO'],
                 'cidade': cidade,
                 'uf': addr['SGL_UF'],
                 'data': result

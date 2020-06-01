@@ -7,6 +7,8 @@
 import json
 import csv
 from unidecode import unidecode
+from sys import argv
+from pathlib import Path
 
 not_found = []
 found = []
@@ -61,7 +63,7 @@ def handle(g, d):
         'location_type': d['geometry']['location_type']
     }
 
-with open('google-output/output9.json') as f:
+with open(argv[1]) as f:
     entries = json.load(f)
 
     for g in entries:
@@ -69,6 +71,7 @@ with open('google-output/output9.json') as f:
 
         if len(data) == 0:
             not_found.append({
+                'ID': g['ID'],
                 'endr': g['endr'],
                 'endr_orig': g.get('endr_orig')
             })
@@ -84,6 +87,8 @@ with open('google-output/output9.json') as f:
             for d in data:
                 if not is_evidently_bad(g, d):
                     candidates.append(d)
+                else:
+                    bad.append(handle(g, d))
 
             if len(candidates) == 1:
                 found.append(handle(g, candidates[0]))
@@ -91,14 +96,14 @@ with open('google-output/output9.json') as f:
             else:
                 ambiguous.extend([handle(g, c) for c in candidates])
 
-    with open('not_found.csv', 'w') as nf:
+    with open(Path(argv[1]).stem + '_not_found.csv', 'w') as nf:
         write_csv(nf, not_found)
 
-    with open('ambiguous.csv', 'w') as a:
+    with open(Path(argv[1]).stem + '_ambiguous.csv', 'w') as a:
         write_csv(a, ambiguous)
 
-    with open('geocoded.csv', 'w') as geo:
+    with open(Path(argv[1]).stem + '_okay.csv', 'w') as geo:
         write_csv(geo, found)
     
-    with open('geocoded_bad.csv', 'w') as b:
+    with open(Path(argv[1]).stem + '_bad.csv', 'w') as b:
         write_csv(b, bad)
