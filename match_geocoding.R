@@ -13,12 +13,14 @@ library(mgsub)
 library(sqldf)
 library(purrr)
 library(furrr)
+library(tictoc)
 
 source('cnefe_matcher.R')
 source('inep_matcher.R')
 source('google_matcher.R')
 
 # Configuration
+google_full_reset = F
 options('sqldf.dll' = '/home/arch/spellfix.so')
 plan(multiprocess)
 
@@ -155,17 +157,112 @@ matched_grouped = matched %>%
         LONGITUDE_LOCAL = fo(LONGITUDE_LOCAL),
         inep_lat = fo(inep_lat),
         inep_lon = fo(inep_lon),
-        cnefe_ad_lat = fo(cnefe_ad_lat),
-        cnefe_ad_lon = fo(cnefe_ad_lon),
-        cnefe_pl_lat = fo(cnefe_pl_lat),
-        cnefe_pl_lon = fo(cnefe_pl_lon),
+        ad_lat = fo(ad_lat),
+        ad_lon = fo(ad_lon),
+        pl_lat = fo(pl_lat),
+        pl_lon = fo(pl_lon),
 
+        pl_Distrito = fo(pl_Distrito),
+        pl_Subdistrito = fo(pl_Subdistrito),
         pl_CodSetor = fo(pl_CodSetor),
+        
+        ad_Distrito = fo(ad_Distrito),
+        ad_Subdistrito = fo(ad_Subdistrito),
         ad_CodSetor = fo(ad_CodSetor))
 
+left = local_2018_f %>% filter(!(ID %in% matched_grouped$ID))
 
+files = list.files(
+    path = 'data/google/geocoder-filtered-output',
+    pattern = '*.csv',
+    full.names = T,
+    recursive = F)
+google_tried = reduce(files, function(acc, x) {
+    geocoded = read_csv(x)
+    bind_rows(acc, geocoded)
+}, .init = tibble())
 
-# export all Google stuff when desired
+matched_grouped = matched_grouped %>% mutate(results =
+    (!is.na(LATITUDE_LOCAL)) +
+    (!is.na(inep_lat)) +
+    (!is.na(pl_CodSetor)) +
+    (!is.na(ad_CodSetor)))
 
-# import Google
-# legacy JOIN
+to_geocode_1 = matched_grouped %>%
+    filter(results == 1) %>%
+    generate_addr_export()
+to_geocode_2 = left %>% generate_addr_export()
+to_geocode = bind_rows(to_geocode_1, to_geocode_2)
+
+if (!google_full_reset) {
+    legacy = read_csv('data/google/legacy/original_to_geocode.csv')
+    to_geocode = to_geocode %>% filter(!(ENDERECO %in% legacy$ENDERECO))
+    to_geocode = to_geocode %>% filter(!(ID %in% google_tried$ID))
+}
+
+to_geocode %>% write.csv('EXPORT_GOOGLE_ADDR.csv', row.names = F)
+# TODO: integrate with Python script
+
+files = list.files(
+    path = 'data/google/geocoder-filtered-output',
+    pattern = '*_okay.csv',
+    full.names = T,
+    recursive = F)
+google_geocoded = reduce(files, function(acc, x) {
+    geocoded = read_csv(x)
+    bind_rows(acc, geocoded)
+}, .init = tibble())
+
+google_legacy = tibble()
+if (!google_full_reset) {
+    google_legacy = read_csv('data/google/legacy/geocoded.csv')
+}
+
+gmatch_legacy = match_geocoded_legacy(local_2018_f, google_legacy)
+gmatch = match_geocoded(local_2018_f, google_geocoded)
+
+matched = bind_rows(matched, gmatch_legacy, gmatch)
+matched_grouped = matched %>%
+    group_by(ID) %>%
+    summarize(
+        COD_LOCALIDADE_IBGE = fo(COD_LOCALIDADE_IBGE),
+        SGL_UF = fo(SGL_UF),
+        LOCAL_VOTACAO = fo(LOCAL_VOTACAO),
+        LOCALIDADE_LOCAL_VOTACAO = fo(LOCALIDADE_LOCAL_VOTACAO),
+        BAIRRO_LOCAL_VOT = fo(BAIRRO_LOCAL_VOT),
+        ENDERECO = fo(ENDERECO),
+        
+        LATITUDE_LOCAL = fo(LATITUDE_LOCAL),
+        LONGITUDE_LOCAL = fo(LONGITUDE_LOCAL),
+        inep_lat = fo(inep_lat),
+        inep_lon = fo(inep_lon),
+        ad_lat = fo(ad_lat),
+        ad_lon = fo(ad_lon),
+        pl_lat = fo(pl_lat),
+        pl_lon = fo(pl_lon),
+        google_lat = fo(google_lat),
+        google_lon = fo(google_lon),
+        
+        pl_Distrito = fo(pl_Distrito),
+        pl_Subdistrito = fo(pl_Subdistrito),
+        pl_CodSetor = fo(pl_CodSetor),
+        
+        ad_Distrito = fo(ad_Distrito),
+        ad_Subdistrito = fo(ad_Subdistrito),
+        ad_CodSetor = fo(ad_CodSetor))
+
+to_place = local_2018_f %>% filter(!(ID %in% matched_grouped$ID))
+if (!google_full_reset) {
+    ap1 = read_csv('data/google/legacy/already_placed_1.csv')
+    ap2 = read_csv('data/google/legacy/already_placed_2.csv')
+    ap3 = read_csv('data/google/legacy/already_placed_3.csv')
+    ap4 = read_csv('data/google/legacy/already_placed_4.csv')
+
+    to_place$norm_local = normalize_simple(to_place$LOCAL_VOTACAO)
+    to_place = to_place %>% filter(!(
+        norm_local %in% ap1$placename_orig |
+        norm_local %in% ap2$placename_orig |
+        norm_local %in% ap3$placename_orig |
+        norm_local %in% ap4$placename_orig
+    ))
+}
