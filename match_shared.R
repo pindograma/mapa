@@ -22,6 +22,31 @@ normalize_place = function(x) {
         str_squish()
 }
 
+move_to_start = function(x, school_words) {
+    spl = str_split(x, ' ')
+    last = sapply(spl, tail, 1)
+    new_start = ifelse(last %in% school_words, last, '')
+    new_end = ifelse(last %in% school_words, '', last)
+    
+    words = lapply(spl, head, -1)
+    words_f = sapply(words, paste, sep = ' ', collapse = ' ')
+
+    paste(new_start, words_f, new_end) %>% str_squish()
+}
+
+move_to_start_2 = function(x, ew_2) {
+    spl = str_split(x, ' ')
+    last = sapply(spl, tail, 1)
+    new_start = ifelse(last %in% ew_2, paste(word(x, 1), last), word(x, 1))
+    new_end = ifelse(last %in% ew_2, '', last)
+    
+    words = lapply(spl, head, -1)
+    words = lapply(words, tail, -1)
+    words_f = sapply(words, paste, sep = ' ', collapse = ' ')
+
+    paste(new_start, words_f, new_end) %>% str_squish()
+}
+
 normalize_school_name = function(x) {
     stage0 = normalize_place(x)
 
@@ -234,4 +259,9 @@ normalize_school_name = function(x) {
     stage9 = move_to_start(stage9, school_words)
 
     str_squish(stage9)
+}
+
+st_unlist = function(x) {
+    is.na(x) = lengths(x) == 0
+    unlist(x)
 }
