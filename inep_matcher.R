@@ -96,9 +96,14 @@ run_inep_match = function(local_2018_f, escolas_geocoded_inep) {
         confident8,
         confident9
     ) %>% distinct(ID, .keep_all = T)
-
-    confident_all2 %>%
-        rename(inep_lat = Latitude) %>%
-        rename(inep_lon = Longitude) %>%
-        select(ID, Escola, norm_escola_t, inep_lat, inep_lon)
+    
+    if ('Latitude' %in% colnames(confident_all2)) {
+        return(confident_all2 %>%
+            rename(inep_lat = Latitude) %>%
+            rename(inep_lon = Longitude) %>%
+            select(ID, Escola, norm_escola_t, inep_lat, inep_lon))
+    } else {
+        return(confident_all2 %>%
+            select(ID, norm_escola_t, local_lat, local_lon))
+    }
 }
