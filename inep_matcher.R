@@ -3,29 +3,27 @@ source('match_shared.R')
 
 # Functions
 run_inep_match = function(local_2018_f, escolas_geocoded_inep) {
-    local_2018_f$norm_local_t = local_2018_f$norm_local_esc
-
     j = c(
-        'norm_local_t'='norm_escola_t',
+        'norm_local_esc'='norm_escola_t',
         'norm_cidade'='norm_cidade',
-        'SGL_UF'='UF')
+        'uf'='UF')
 
     matched = inner_join(local_2018_f, escolas_geocoded_inep, by = j) %>%
         remove_ambiguities()
     left = local_2018_f %>% filter(!(ID %in% matched$ID))
 
-    matched2 = sqldf('SELECT *, editdist3(norm_local_t, norm_escola_t) FROM left
+    matched2 = sqldf('SELECT *, editdist3(norm_local_esc, norm_escola_t) FROM left
                      INNER JOIN escolas_geocoded_inep ON
                      left.norm_cidade = escolas_geocoded_inep.norm_cidade AND
-                     left.SGL_UF = escolas_geocoded_inep.UF AND
-                     editdist3(left.norm_local_t, escolas_geocoded_inep.norm_escola_t) <= 1000')
+                     left.uf = escolas_geocoded_inep.UF AND
+                     editdist3(left.norm_local_esc, escolas_geocoded_inep.norm_escola_t) <= 1000')
     matched2$norm_cidade_temp = matched2$norm_cidade
     matched2 = subset(matched2, select = -c(norm_cidade))
     matched2$norm_cidade = matched2$norm_cidade_temp
 
     mmatched2 = matched2 %>%
-        rename(dist = `editdist3(norm_local_t, norm_escola_t)`) %>%
-        mutate(l = nchar(norm_local_t))
+        rename(dist = `editdist3(norm_local_esc, norm_escola_t)`) %>%
+        mutate(l = nchar(norm_local_esc))
 
     confident2 = mmatched2 %>%
         filter(dist > 0 & dist <= 200) %>%
@@ -56,24 +54,24 @@ run_inep_match = function(local_2018_f, escolas_geocoded_inep) {
     from_p = to4
     to_p = rep(' ', length(to4))
 
-    left2$norm_local_t = mgsub(left2$norm_local_t, from_p, to_p)
+    left2$norm_local_esc = mgsub(left2$norm_local_esc, from_p, to_p)
     escolas_geocoded_inep$norm_escola_t = mgsub(escolas_geocoded_inep$norm_escola_t, from_p, to_p)
 
-    left2$norm_local_t = str_squish(left2$norm_local_t)
+    left2$norm_local_esc = str_squish(left2$norm_local_esc)
     escolas_geocoded_inep$norm_escola_t = str_squish(escolas_geocoded_inep$norm_escola_t)
 
-    matched4 = sqldf('SELECT *, editdist3(norm_local_t, norm_escola_t) FROM left2
+    matched4 = sqldf('SELECT *, editdist3(norm_local_esc, norm_escola_t) FROM left2
                      INNER JOIN escolas_geocoded_inep ON
                      left2.norm_cidade = escolas_geocoded_inep.norm_cidade AND
-                     left2.SGL_UF = escolas_geocoded_inep.UF AND
-                     editdist3(left2.norm_local_t, escolas_geocoded_inep.norm_escola_t) <= 1000')
+                     left2.uf = escolas_geocoded_inep.UF AND
+                     editdist3(left2.norm_local_esc, escolas_geocoded_inep.norm_escola_t) <= 1000')
     matched4$norm_cidade_temp = matched4$norm_cidade
     matched4 = subset(matched4, select = -c(norm_cidade))
     matched4$norm_cidade = matched4$norm_cidade_temp
 
     mmatched4 = matched4 %>%
-        rename(dist = `editdist3(norm_local_t, norm_escola_t)`) %>%
-        mutate(l = nchar(norm_local_t))
+        rename(dist = `editdist3(norm_local_esc, norm_escola_t)`) %>%
+        mutate(l = nchar(norm_local_esc))
 
     confident6 = mmatched4 %>%
         filter(dist <= 200) %>%
