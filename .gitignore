@@ -5,3 +5,8 @@
 .Rhistory
 .Rproj*
 .Rproj.user
+
+*.csv
+*.json
+*.xlsx
+data
