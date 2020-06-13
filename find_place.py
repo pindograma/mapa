@@ -22,15 +22,15 @@ with open(argv[1]) as f:
 
     for addr in addrs:
         try:
-            placename_orig = unidecode(addr['LOCAL_VOTACAO']).upper()
+            placename_orig = unidecode(addr['local']).upper()
 
             placename = placename_orig
             placename = placename.replace('.', '')
             placename = ' '.join(placename.strip().split())
 
-            cidade = unidecode(addr['LOCALIDADE_LOCAL_VOTACAO']).upper()
+            cidade = unidecode(addr['cidade']).upper()
 
-            pname = ' '.join([placename, cidade, addr['SGL_UF']])
+            pname = ' '.join([placename, cidade, addr['uf']])
             print(pname)
             
             sleep(0.3)
@@ -46,9 +46,9 @@ with open(argv[1]) as f:
                 'ID': addr['ID'],
                 'placename_orig': placename_orig,
                 'placename': pname,
-                'endr_orig': addr['ENDERECO'],
+                'endr_orig': addr['endereco'],
                 'cidade': cidade,
-                'uf': addr['SGL_UF'],
+                'uf': addr['uf'],
                 'data': result
             })
 

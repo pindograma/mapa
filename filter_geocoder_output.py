@@ -14,6 +14,7 @@ not_found = []
 found = []
 ambiguous = []
 bad = []
+approx = []
 
 def write_csv(f, data):
     keys = data[0].keys()
@@ -32,7 +33,8 @@ def is_evidently_bad(g, d):
     if d['geometry']['location_type'] == 'APPROXIMATE':
         return True
 
-    if d['geometry']['location_type'] == 'GEOMETRIC_CENTER':
+    if (d['geometry']['location_type'] == 'GEOMETRIC_CENTER' and
+        get_component(d, 'route') is None):
         return True
 
     uf = get_component(d, 'administrative_area_level_1')
@@ -51,7 +53,7 @@ def is_evidently_bad(g, d):
 
 def handle(g, d):
     return {
-        'ID': g['ID'],
+        'ID': g.get('ID'),
         'endr_orig': g.get('endr_orig'),
         'endr': g['endr'],
         'uf': g['uf'],
@@ -71,14 +73,20 @@ with open(argv[1]) as f:
 
         if len(data) == 0:
             not_found.append({
-                'ID': g['ID'],
+                'ID': g.get('ID'),
                 'endr': g['endr'],
-                'endr_orig': g.get('endr_orig')
+                'endr_orig': g.get('endr_orig'),
+                'uf': g['uf'],
+                'bairro_orig': g['bairro'],
+                'cidade': g['cidade']
             })
 
         elif len(data) == 1:
             if not is_evidently_bad(g, data[0]):
-                found.append(handle(g, data[0]))
+                if data[0]['geometry']['location_type'] == 'GEOMETRIC_CENTER':
+                    approx.append(handle(g, data[0]))
+                else:
+                    found.append(handle(g, data[0]))
             else:
                 bad.append(handle(g, data[0]))
 
@@ -91,7 +99,10 @@ with open(argv[1]) as f:
                     bad.append(handle(g, d))
 
             if len(candidates) == 1:
-                found.append(handle(g, candidates[0]))
+                if candidates[0]['geometry']['location_type'] == 'GEOMETRIC_CENTER':
+                    approx.append(handle(g, candidates[0]))
+                else:
+                    found.append(handle(g, candidates[0]))
 
             else:
                 ambiguous.extend([handle(g, c) for c in candidates])
@@ -104,6 +115,9 @@ with open(argv[1]) as f:
 
     with open(Path(argv[1]).stem + '_okay.csv', 'w') as geo:
         write_csv(geo, found)
+
+    with open(Path(argv[1]).stem + '_approx.csv', 'w') as app:
+        write_csv(app, approx)
     
     with open(Path(argv[1]).stem + '_bad.csv', 'w') as b:
         write_csv(b, bad)

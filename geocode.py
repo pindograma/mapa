@@ -23,7 +23,7 @@ with open(argv[1]) as f:
 
     for addr in addrs:
         try:
-            endr_orig = unidecode(addr['ENDERECO']).upper()
+            endr_orig = unidecode(addr['endereco']).upper()
             
             endr = endr_orig
             endr = ' '.join(endr.strip().split())
@@ -42,12 +42,12 @@ with open(argv[1]) as f:
             endr = re.sub(r'\(?\d{2}\)?\d{4}\d?-?\d{4}', '', endr)
             endr = re.sub(r'\d{4}\d?-?\d{4}', '', endr)
 
-            bairro = unidecode(addr['BAIRRO_LOCAL_VOT']).upper()
+            bairro = unidecode(addr['bairro']).upper()
             endr = re.sub(bairro + '$', '', endr)
 
-            cidade = unidecode(addr['LOCALIDADE_LOCAL_VOTACAO']).upper()
+            cidade = unidecode(addr['cidade']).upper()
 
-            endr = ' '.join([endr, bairro, cidade, addr['SGL_UF']])
+            endr = ' '.join([endr, bairro, cidade, addr['uf']])
             print(endr)
 
             components = {
@@ -61,9 +61,9 @@ with open(argv[1]) as f:
                 'ID': addr['ID'],
                 'endr_orig': endr_orig,
                 'endr': endr,
-                'bairro': addr['BAIRRO_LOCAL_VOT'],
-                'uf': addr['SGL_UF'],
-                'cidade': addr['LOCALIDADE_LOCAL_VOTACAO'],
+                'bairro': addr['bairro'],
+                'uf': addr['uf'],
+                'cidade': addr['cidade'],
                 'data': result
             })
 
