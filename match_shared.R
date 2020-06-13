@@ -10,6 +10,13 @@ remove_ambiguities = function(x) {
         ungroup()
 }
 
+get_ambiguities = function(x, stage = 0) {
+    x %>% group_by(ID) %>%
+        filter(n() > 1) %>%
+        ungroup() %>%
+        mutate(stage = stage)
+}
+
 normalize_simple = function(x) {
     stri_trans_general(str = x, id = 'Latin-ASCII') %>%
         str_squish() %>%
