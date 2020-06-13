@@ -4,13 +4,10 @@
 # This program is licensed under the GNU General Public License, version 3.
 # See the LICENSE file for details.
 
-generate_addr_export = function(addrs) {
-    addrs$norm = normalize_simple(addrs$ENDERECO)
-    addrs %>%
-        filter(grepl('\\d', norm) &
-               !grepl('S\\/N', norm) &
-               !grepl('[,\\s]+SN', norm) &
-               !grepl('KM', norm) &
+generate_addr_export = function(addrs, allow_sn = F) {
+    addrs = addrs %>%
+        mutate(norm = normalize_simple(endereco)) %>%
+        filter(!grepl('KM', norm) &
                !grepl('^ESTRADA\\s+GERAL', norm) &
                !grepl('RURAL', norm) &
                !grepl('^RIO', norm) &
@@ -31,13 +28,37 @@ generate_addr_export = function(addrs) {
                !grepl('^VILA', norm) &
                !grepl('^BAIRRO', norm) &
                !grepl('^LINHA', norm) &
-               !grepl('^ASSENTAMENTO', norm)) %>%
-        select(ID, ENDERECO, BAIRRO_LOCAL_VOT, LOCALIDADE_LOCAL_VOTACAO, SGL_UF)
+               !grepl('^ASSENTAMENTO', norm))
+    
+    if (!allow_sn) {
+        addrs = addrs %>% filter(
+            grepl('\\d', norm) &
+            !grepl('S\\/N', norm) &
+            !grepl('[,\\s]+SN', norm))
+    }
+    
+    addrs %>% select(ID, endereco, bairro, cidade, uf,
+                     norm_google_endr, norm_google_bairro, norm_google_cidade)
+}
+
+revert_unidecode_damage = function(x) {
+    normalize_simple(x) %>%
+        str_replace_all('º', 'O') %>%
+        str_replace_all('ª', 'A')
 }
 
 match_geocoded = function(local_2018_f, google) {
-    inner_join(local_2018_f, google, by = c('ID' = 'ID')) %>%
-        rename(google_lat = lat, google_lon = lon)
+    inner_join(
+        local_2018_f,
+        google %>% select(-ID) %>% distinct(),
+        by = c(
+            'uf' = 'uf',
+            'cidade' = 'cidade',
+            'bairro' = 'bairro_orig',
+            'norm_google_endr' = 'endr_orig'
+        )) %>%
+            distinct(ID, .keep_all = T) %>%
+            rename(google_lat = lat, google_lon = lon)
 }
 
 match_geocoded_legacy = function(local_2018_f, google) {
@@ -47,20 +68,21 @@ match_geocoded_legacy = function(local_2018_f, google) {
         str_trim()
     google$endr_orig = ifelse(is.na(google$endr_orig), google$endr_orig_0, google$endr_orig)
 
-    local_2018_f$endr_google = normalize_simple(local_2018_f$ENDERECO)
+    local_2018_f$endr_google = normalize_simple(local_2018_f$endereco)
     local_2018_f$endr_google_2 = str_replace(
         local_2018_f$endr_google,
-        '\\s*-\\s*ZONA URBANA', '') %>% str_replace('º', 'O')
+        '\\s*-\\s*ZONA URBANA', '') %>% revert_unidecode_damage()
     
     google$endr_orig = str_squish(google$endr_orig)
     google$endr_orig_2 = str_replace(google$endr_orig, '\\s+-\\s+ZONA URBANA', '') %>%
         str_squish()
 
-    inner_join(local_2018_f, google, by = c('endr_google_2' = 'endr_orig_2')) %>%
-        remove_ambiguities() %>%
+    inner_join(local_2018_f, google, by = c(
+        'uf' = 'uf',
+        'cidade' = 'cidade',
+        'bairro' = 'bairro_orig',
+        'endr_google_2' = 'endr_orig_2'
+    )) %>%
+        distinct(ID, .keep_all = T) %>%
         rename(google_lat = lat, google_lon = lon)
 }
-
-import_placenamed = function(){}
-
-import_placenamed_legacy = function(){}
