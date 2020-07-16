@@ -15,14 +15,16 @@ using namespace Rcpp;
 DataFrame mapwalk_(NumericVector main,
                    DoubleVector bolsonaro_p,
                    List geom,
+                   CharacterVector codetract,
                    List g_geom,
+                   CharacterVector g_codetract,
                    std::set<int> all,
                    std::vector<int> useless)
 {
     int orig_len = all.size();
     Rcout << "orig_len = " << orig_len << "\n";
     
-    Function st_queen_sp("st_intersects_sp");
+    Function st_intersects("st_intersects_t");
     Function st_sfc("st_sfc");
     
     List geom_q = List::create();
@@ -32,7 +34,7 @@ DataFrame mapwalk_(NumericVector main,
     }
     geom_q = st_sfc(geom_q, Named("crs", 31983));
     
-    List q_ = st_queen_sp(geom_q);
+    List q_ = st_intersects(geom_q);
     
     List q = List::create();
     int j = 0;
@@ -75,6 +77,7 @@ DataFrame mapwalk_(NumericVector main,
         main.push_back(main[i]);
         bolsonaro_p.push_back(NA_REAL);
         geom.push_back(g_geom[pick - 1]);
+        codetract.push_back(g_codetract[pick - 1]);
     }
     
     geom = st_sfc(geom, Named("crs", 31983));
@@ -83,10 +86,11 @@ DataFrame mapwalk_(NumericVector main,
         Function st_sf("st_sf");
         return st_sf(Named("geom", geom),
                      Named("main", main),
-                     Named("bolsonaro_p", bolsonaro_p));
+                     Named("cand", bolsonaro_p),
+                     Named("code_tract", codetract));
     }
         
-    return mapwalk_(main, bolsonaro_p, geom, g_geom, all, useless);
+    return mapwalk_(main, bolsonaro_p, geom, codetract, g_geom, g_codetract, all, useless);
 }
 
 // [[Rcpp::export]]
@@ -95,11 +99,13 @@ DataFrame mapwalk(DataFrame spt, DataFrame sp, NumericVector all_vec) {
     std::set<int> all(all_.begin(), all_.end());
     
     NumericVector main = spt["main"];
-    DoubleVector bolsonaro_p = spt["freixo"];
+    DoubleVector bolsonaro_p = spt["cand"];
+    CharacterVector codetract = spt["code_tract"];
     List geom = spt["geom"];
     List g_geom = sp["geom"];
+    CharacterVector g_codetract = sp["code_tract"];
     
-    std::vector<int> useless(30000, false);
+    std::vector<int> useless(150000, false);
     
-    return mapwalk_(main, bolsonaro_p, geom, g_geom, all, useless);
+    return mapwalk_(main, bolsonaro_p, geom, codetract, g_geom, g_codetract, all, useless);
 }
