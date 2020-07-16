@@ -24,7 +24,9 @@ open_2012 = function() {
         rename(CEP = NUM_CEP) %>%
         mutate(CEP = as.character(CEP)) %>%
         mutate(tse_lat = NA, tse_lon = NA) %>%
-        select(local, codigo_ibge, uf, cidade, bairro, endereco, tse_lat, tse_lon, CEP)
+        rename(zona = ZONA, secao = SECAO) %>%
+        select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
+               tse_lat, tse_lon, CEP, zona, secao)
 }
 
 open_2014 = function() {
@@ -47,7 +49,9 @@ open_2014 = function() {
         rename(endereco = ENDERECO_LOCALVOTACAO) %>%
         rename(CEP = NUM_CEP) %>%
         mutate(tse_lat = NA, tse_lon = NA) %>%
-        select(local, codigo_ibge, uf, cidade, bairro, endereco, tse_lat, tse_lon, CEP)
+        rename(zona = ZONA, secao = SECAO) %>%
+        select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
+               tse_lat, tse_lon, CEP, zona, secao)
 }
 
 open_2016 = function() {
@@ -68,7 +72,9 @@ open_2016 = function() {
         rename(endereco = DS_ENDERECO) %>%
         rename(CEP = NR_CEP) %>%
         mutate(tse_lat = NA, tse_lon = NA) %>%
-        select(local, codigo_ibge, uf, cidade, bairro, endereco, tse_lat, tse_lon, CEP)
+        rename(zona = NR_ZONA, secao = NR_SECAO) %>%
+        select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
+               tse_lat, tse_lon, CEP, zona, secao)
 }
 
 open_2018 = function() {
@@ -92,7 +98,9 @@ open_2018 = function() {
         rename(bairro = BAIRRO_LOCAL_VOT) %>%
         rename(endereco = ENDERECO) %>%
         rename(tse_lat = LATITUDE_LOCAL, tse_lon = LONGITUDE_LOCAL) %>%
-        select(local, codigo_ibge, uf, cidade, bairro, endereco, tse_lat, tse_lon, CEP)
+        rename(zona = ZONA, secao = NUM_SECAO) %>%
+        select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
+               tse_lat, tse_lon, CEP, zona, secao)
 }
 
 open_2020 = function() {
@@ -110,5 +118,7 @@ open_2020 = function() {
         rename(endereco = DES_ENDERECO) %>%
         rename(CEP = NUM_CEP) %>%
         rename(tse_lat = NUM_LATITUDE, tse_lon = NUM_LONGITUDE) %>%
-        select(local, codigo_ibge, uf, cidade, bairro, endereco, tse_lat, tse_lon, CEP)
+        rename(zona = NUM_ZONA, secao = NUM_SECAO) %>% 
+        select(local, codigo_ibge, uf, cidade, bairro, endereco,
+               tse_lat, tse_lon, CEP, zona, secao)
 }
