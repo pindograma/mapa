@@ -268,6 +268,13 @@ normalize_school_name = function(x) {
     str_squish(stage9)
 }
 
+remove_titles = function(x) {
+    from_p = to4
+    to_p = rep(' ', length(to4))
+
+    str_squish(mgsub(x, from_p, to_p))
+}
+
 st_unlist = function(x) {
     is.na(x) = lengths(x) == 0
     unlist(x)

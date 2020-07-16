@@ -43,7 +43,8 @@ rm(tse_locations)
 escolas_geocoded_inep <- read_delim("escolas-geocoded-inep.csv", 
     ";", escape_double = FALSE, trim_ws = TRUE) %>%
     mutate(norm_cidade = normalize_simple(`Município`)) %>%
-    mutate(norm_escola_t = future_map_chr(Escola, normalize_school_name))
+    mutate(norm_escola_t = future_map_chr(Escola, normalize_school_name)) %>%
+    mutate(norm_escola_wt = remove_titles(norm_escola_t))
 save(escolas_geocoded_inep, file = 'escolas_geocoded_inep.Rdata')
 rm(escolas_geocoded_inep)
 

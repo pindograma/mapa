@@ -51,27 +51,18 @@ run_inep_match = function(local_2018_f, escolas_geocoded_inep) {
 
     left2 = local_2018_f %>% filter(!(ID %in% confident_all$ID))
 
-    from_p = to4
-    to_p = rep(' ', length(to4))
-
-    left2$norm_local_esc = mgsub(left2$norm_local_esc, from_p, to_p)
-    escolas_geocoded_inep$norm_escola_t = mgsub(escolas_geocoded_inep$norm_escola_t, from_p, to_p)
-
-    left2$norm_local_esc = str_squish(left2$norm_local_esc)
-    escolas_geocoded_inep$norm_escola_t = str_squish(escolas_geocoded_inep$norm_escola_t)
-
-    matched4 = sqldf('SELECT *, editdist3(norm_local_esc, norm_escola_t) FROM left2
+    matched4 = sqldf('SELECT *, editdist3(norm_local_esc_wt, norm_escola_wt) FROM left2
                      INNER JOIN escolas_geocoded_inep ON
                      left2.norm_cidade = escolas_geocoded_inep.norm_cidade AND
                      left2.uf = escolas_geocoded_inep.UF AND
-                     editdist3(left2.norm_local_esc, escolas_geocoded_inep.norm_escola_t) <= 1000')
+                     editdist3(left2.norm_local_esc_wt, escolas_geocoded_inep.norm_escola_wt) <= 1000')
     matched4$norm_cidade_temp = matched4$norm_cidade
     matched4 = subset(matched4, select = -c(norm_cidade))
     matched4$norm_cidade = matched4$norm_cidade_temp
 
     mmatched4 = matched4 %>%
-        rename(dist = `editdist3(norm_local_esc, norm_escola_t)`) %>%
-        mutate(l = nchar(norm_local_esc))
+        rename(dist = `editdist3(norm_local_esc_wt, norm_escola_wt)`) %>%
+        mutate(l = nchar(norm_local_esc_wt))
 
     confident6 = mmatched4 %>%
         filter(dist <= 200) %>%
@@ -101,9 +92,9 @@ run_inep_match = function(local_2018_f, escolas_geocoded_inep) {
         return(confident_all2 %>%
             rename(inep_lat = Latitude) %>%
             rename(inep_lon = Longitude) %>%
-            select(ID, Escola, norm_escola_t, inep_lat, inep_lon))
+            select(ID, Escola, norm_escola_t, norm_escola_wt, inep_lat, inep_lon))
     } else {
         return(confident_all2 %>%
-            select(ID, norm_escola_t, local_lat, local_lon))
+            select(ID, norm_escola_t, norm_escola_wt, local_lat, local_lon))
     }
 }
