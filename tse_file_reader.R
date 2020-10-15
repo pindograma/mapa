@@ -5,7 +5,7 @@
 # See the LICENSE file for details.
 
 open_2012 = function() {
-    local_2012 <- read_excel("local-votacao-2012.xlsx", sheet = "Plan2",
+    local_2012 <- read_excel("data/local-votacao-2012.xlsx", sheet = "Plan2",
         col_types = c("text", 
             "numeric", "numeric", "numeric", 
             "text", "numeric", "text", "text", 
@@ -30,7 +30,7 @@ open_2012 = function() {
 }
 
 open_2014 = function() {
-    local_2014 = read_delim('local-votacao-2014.csv', ';',
+    local_2014 = read_delim('data/local-votacao-2014.csv', ';',
         escape_double = F,
         locale = locale(decimal_mark = ','),
         col_types = cols(
@@ -55,9 +55,9 @@ open_2014 = function() {
 }
 
 open_2016 = function() {
-    correspondencia = read_csv('municipios_brasileiros_tse.csv') %>%
+    correspondencia = read_csv('data/municipios_brasileiros_tse.csv') %>%
         select(codigo_tse, codigo_ibge)
-    local_2016 = read_delim('local-votacao-2016.csv', ';',
+    local_2016 = read_delim('data/local-votacao-2016.csv', ';',
         escape_double = F,
         locale = locale(encoding = 'ISO-8859-1', decimal_mark = ','),
         trim_ws = T)
@@ -78,7 +78,7 @@ open_2016 = function() {
 }
 
 open_2018 = function() {
-    local_2018 <- read_delim("local-votacao-2018-aug.csv",  ";",
+    local_2018 <- read_delim("data/local-votacao-2018-aug.csv",  ";",
         escape_double = F,
         col_types = cols(
             LATITUDE_ZONA = col_double(),
@@ -104,7 +104,7 @@ open_2018 = function() {
 }
 
 open_2020 = function() {
-    local_2020 = read_csv('local-votacao-2020-jun.csv',
+    local_2020 = read_csv('data/local-votacao-2020-jun.csv',
         col_types = cols(COD_OBJETO_PAIS = col_character()),
         locale = locale(decimal_mark = ','))
     

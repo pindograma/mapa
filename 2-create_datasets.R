@@ -1,14 +1,15 @@
-# match_geocoding.R
+# create_datasets.R
 # (c) 2020 CincoNoveSeis Jornalismo Ltda.
 #
 # This program is licensed under the GNU General Public License, version 3.
 # See the LICENSE file for details.
 
-library(readr)
+library(tidyverse)
 library(sf)
 library(geobr)
-library(dplyr)
 library(furrr)
+library(stringi)
+library(mgsub)
 
 plan(multiprocess)
 
@@ -40,7 +41,7 @@ tse_locations = bind_rows(
 save(tse_locations, file = 'tse_locations.Rdata')
 rm(tse_locations)
 
-escolas_geocoded_inep <- read_delim("escolas-geocoded-inep.csv", 
+escolas_geocoded_inep <- read_delim("data/inep.csv", 
     ";", escape_double = FALSE, trim_ws = TRUE) %>%
     mutate(norm_cidade = normalize_simple(`Município`)) %>%
     mutate(norm_escola_t = future_map_chr(Escola, normalize_school_name)) %>%
@@ -79,7 +80,7 @@ read_rio = function(path, cn = 'Nome_Escol') {
         mutate(norm_escola_t = normalize_school_name(!!as.symbol(cn)))
 }
 
-escolas_geocoded_recife = read_sf('recife.geojson') %>%
+escolas_geocoded_recife = read_sf('data/recife.geojson') %>%
     st_transform(31985) %>%
     st_centroid() %>%
     st_transform(4326) %>%
@@ -94,20 +95,20 @@ escolas_geocoded_recife = read_sf('recife.geojson') %>%
     mutate(norm_cidade =  'RECIFE') %>%
     mutate(norm_escola_t = paste(escola_tipo, escola_nome) %>% normalize_school_name())
 
-escolas_geocoded_sp = read_delim('estado-saopaulo.csv', ';',
+escolas_geocoded_sp = read_delim('data/estado-saopaulo.csv', ';',
     locale = locale(decimal_mark = ',', encoding = 'ISO-8859-1')) %>%
     rename(local_lat = DS_LATITUDE, local_lon = DS_LONGITUDE) %>%
     mutate(UF = 'SP') %>%
     mutate(norm_cidade = normalize_simple(MUN)) %>%
     mutate(norm_escola_t = normalize_sp_name(TIPOESC, NOMESC) %>% normalize_school_name())
 
-escolas_geocoded_poa = read_delim('portoalegre.csv', ';') %>%
+escolas_geocoded_poa = read_delim('data/portoalegre.csv', ';') %>%
     rename(local_lat = latitude, local_lon = longitude) %>%
     mutate(UF = 'RS') %>%
     mutate(norm_cidade = 'PORTO ALEGRE') %>%
     mutate(norm_escola_t = normalize_school_name(nome))
 
-escolas_geocoded_al = read_csv('alagoas.csv') %>%
+escolas_geocoded_al = read_csv('data/alagoas.csv') %>%
     rename(local_lat = `geometry/coordinates/0`, local_lon = `geometry/coordinates/1`) %>%
     mutate(UF = 'AL') %>%
     mutate(norm_cidade = normalize_simple(`properties/Município`)) %>%
@@ -115,9 +116,9 @@ escolas_geocoded_al = read_csv('alagoas.csv') %>%
     mutate(norm_escola_t = normalize_school_name(norm_escola_t)) %>%
     filter(!grepl('LOCALIZACAO APROXIMADA', norm_escola_t))
 
-escolas_geocoded_rio_mun = read_rio('escolas-rio-mun/Escolas_Municipais.shp', 'SMEDBOEs33')
-escolas_geocoded_rio_est = read_rio('escolas-rio-est/Escolas_Estaduais.shp')
-escolas_geocoded_rio_fed = read_rio('escolas-rio-fed/Escolas_Federais.shp')
+escolas_geocoded_rio_mun = read_rio('data/cidade-rio-mun/Escolas_Municipais.shp', 'SMEDBOEs33')
+escolas_geocoded_rio_est = read_rio('data/cidade-rio-est/Escolas_Estaduais.shp')
+escolas_geocoded_rio_fed = read_rio('data/cidade-rio-fed/Escolas_Federais.shp')
 
 local_schools_sel = bind_rows(
     escolas_geocoded_recife,
@@ -131,12 +132,12 @@ local_schools_sel = bind_rows(
 save(local_schools_sel, file = 'local_schools_sel.Rdata')
 rm(local_schools_sel)
 
-cnefe_rural = read_delim('cnefe_agro/all.csv', ';', col_types = cols(
-    NOM_COMP_ELEM4=col_character(),
-    VAL_COMP_ELEM4=col_character(),
-    NOM_COMP_ELEM5=col_character(),
-    VAL_COMP_ELEM5=col_character(),
-    NOM_TITULO_SEGLOGR=col_character())) %>%
+cnefe_rural = read_delim('data/cnefe_agro/all.csv', ';', col_types = cols(
+    NOM_COMP_ELEM4 = col_character(),
+    VAL_COMP_ELEM4 = col_character(),
+    NOM_COMP_ELEM5 = col_character(),
+    VAL_COMP_ELEM5 = col_character(),
+    NOM_TITULO_SEGLOGR = col_character())) %>%
     filter(!is.na(LATITUDE) & !is.na(LONGITUDE)) %>%
     normalize_cnefe(T)
 save(cnefe_rural, file = 'cnefe_rural.Rdata')
@@ -144,7 +145,7 @@ rm(cnefe_rural)
 
 mun = read_municipality(code_muni = 'all', 2017) %>%
     mutate(rn = row_number())
-ibge_agl = st_read('ibge/loc_aglomerado_rural_isolado_p.shp') %>%
+ibge_agl = st_read('data/ibge/loc_aglomerado_rural_isolado_p.shp') %>%
     st_transform(4674) %>%
     mutate(mun = st_within(., mun) %>% st_unlist()) %>%
     inner_join(mun %>% st_drop_geometry(), by = c('mun' = 'rn')) %>%
@@ -154,46 +155,7 @@ ibge_agl = st_read('ibge/loc_aglomerado_rural_isolado_p.shp') %>%
 save(ibge_agl, file = 'ibge_agl.Rdata')
 rm(ibge_agl)
 
-cnefe_with_ids = read_csv('cnefe_with_ids.csv',
-    col_types = cols(
-        CEP = col_character(),
+malha_shapes = list.files(path = 'data/fq2019', pattern = '*.shp', recursive = T, full.names = T)
+malha = map_dfr(malha_shapes, function(x) st_read(x))
+save(malha, file = 'malha2019.Rdata')
 
-        Lat = col_character(),
-        Lon = col_character(),
-
-        Elemento2 = col_character(),
-        Elemento3 = col_character(),
-        Elemento4 = col_character(),
-        Elemento5 = col_character(),
-        Elemento6 = col_character(),
-        Valor2 = col_character(),
-        Valor3 = col_character(),
-        Valor4 = col_character(),
-        Valor5 = col_character(),
-        Valor6 = col_character()
-    )) %>%
-        filter(EspecieEndereco != 8) %>%
-        normalize_cnefe()
-save(cnefe_with_ids, file = 'cnefe_with_ids.Rdata')
-rm(cnefe_with_ids)
-
-cnefe_all = read_csv('cnefe_filtered.csv',
-    col_types = cols(
-        CEP = col_character(),
-
-        Lat = col_character(),
-        Lon = col_character(),
-
-        Elemento2 = col_character(),
-        Elemento3 = col_character(),
-        Elemento4 = col_character(),
-        Elemento5 = col_character(),
-        Elemento6 = col_character(),
-        Valor2 = col_character(),
-        Valor3 = col_character(),
-        Valor4 = col_character(),
-        Valor5 = col_character(),
-        Valor6 = col_character()
-    )) %>% normalize_cnefe()
-save(cnefe_all, file = 'cnefe_all.Rdata')
-rm(cnefe_all)
