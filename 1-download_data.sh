@@ -105,7 +105,9 @@ for city in *.txt; do
     rm $city
 done
 
+pushd ..
 Rscript ../concatenate_cnefe.R
+popd
 
 # Faces e Quadras 2019
 rm -rf fq2019
