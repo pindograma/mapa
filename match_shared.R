@@ -279,3 +279,9 @@ st_unlist = function(x) {
     is.na(x) = lengths(x) == 0
     unlist(x)
 }
+
+revert_unidecode_damage = function(x) {
+    normalize_simple(x) %>%
+        str_replace_all('º', 'O') %>%
+        str_replace_all('ª', 'A')
+}

@@ -41,12 +41,6 @@ generate_addr_export = function(addrs, allow_sn = F) {
                      norm_google_endr, norm_google_bairro, norm_google_cidade)
 }
 
-revert_unidecode_damage = function(x) {
-    normalize_simple(x) %>%
-        str_replace_all('º', 'O') %>%
-        str_replace_all('ª', 'A')
-}
-
 match_geocoded = function(local_2018_f, google) {
     inner_join(
         local_2018_f,

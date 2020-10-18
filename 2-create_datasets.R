@@ -15,6 +15,7 @@ plan(multiprocess)
 
 source('tse_file_reader.R')
 source('cnefe_matcher.R')
+source('acronyms.R')
 source('match_shared.R')
 
 sfc_as_cols <- function(x, names = c("x","y")) {
@@ -77,7 +78,8 @@ read_rio = function(path, cn = 'Nome_Escol') {
         tibble() %>%
         mutate(UF = 'RJ') %>%
         mutate(norm_cidade = 'RIO DE JANEIRO') %>%
-        mutate(norm_escola_t = normalize_school_name(!!as.symbol(cn)))
+        mutate(norm_escola_t = normalize_school_name(!!as.symbol(cn))) %>%
+        mutate(norm_escola_wt = remove_titles(norm_escola_t))
 }
 
 escolas_geocoded_recife = read_sf('data/recife.geojson') %>%
@@ -93,20 +95,23 @@ escolas_geocoded_recife = read_sf('data/recife.geojson') %>%
     )) %>%
     mutate(UF = 'PE') %>%
     mutate(norm_cidade =  'RECIFE') %>%
-    mutate(norm_escola_t = paste(escola_tipo, escola_nome) %>% normalize_school_name())
+    mutate(norm_escola_t = paste(escola_tipo, escola_nome) %>% normalize_school_name()) %>%
+    mutate(norm_escola_wt = remove_titles(norm_escola_t))
 
 escolas_geocoded_sp = read_delim('data/estado-saopaulo.csv', ';',
     locale = locale(decimal_mark = ',', encoding = 'ISO-8859-1')) %>%
     rename(local_lat = DS_LATITUDE, local_lon = DS_LONGITUDE) %>%
     mutate(UF = 'SP') %>%
     mutate(norm_cidade = normalize_simple(MUN)) %>%
-    mutate(norm_escola_t = normalize_sp_name(TIPOESC, NOMESC) %>% normalize_school_name())
+    mutate(norm_escola_t = normalize_sp_name(TIPOESC, NOMESC) %>% normalize_school_name()) %>%
+    mutate(norm_escola_wt = remove_titles(norm_escola_t))
 
 escolas_geocoded_poa = read_delim('data/portoalegre.csv', ';') %>%
     rename(local_lat = latitude, local_lon = longitude) %>%
     mutate(UF = 'RS') %>%
     mutate(norm_cidade = 'PORTO ALEGRE') %>%
-    mutate(norm_escola_t = normalize_school_name(nome))
+    mutate(norm_escola_t = normalize_school_name(nome)) %>%
+    mutate(norm_escola_wt = remove_titles(norm_escola_t))
 
 escolas_geocoded_al = read_csv('data/alagoas.csv') %>%
     rename(local_lat = `geometry/coordinates/0`, local_lon = `geometry/coordinates/1`) %>%
@@ -114,6 +119,7 @@ escolas_geocoded_al = read_csv('data/alagoas.csv') %>%
     mutate(norm_cidade = normalize_simple(`properties/Município`)) %>%
     mutate(norm_escola_t = str_replace(`properties/Nome`, '\\(INTEGRAL\\)', '')) %>%
     mutate(norm_escola_t = normalize_school_name(norm_escola_t)) %>%
+    mutate(norm_escola_wt = remove_titles(norm_escola_t)) %>%
     filter(!grepl('LOCALIZACAO APROXIMADA', norm_escola_t))
 
 escolas_geocoded_rio_mun = read_rio('data/cidade-rio-mun/Escolas_Municipais.shp', 'SMEDBOEs33')
@@ -128,7 +134,7 @@ local_schools_sel = bind_rows(
     escolas_geocoded_rio_mun,
     escolas_geocoded_rio_est,
     escolas_geocoded_rio_fed,
-) %>% select(UF, norm_cidade, norm_escola_t, local_lat, local_lon)
+) %>% select(UF, norm_cidade, norm_escola_t, norm_escola_wt, local_lat, local_lon)
 save(local_schools_sel, file = 'local_schools_sel.Rdata')
 rm(local_schools_sel)
 

@@ -170,7 +170,7 @@ normalize_cnefe = function(cnefe, mode = 0) {
             left_join(all_tracts %>% st_drop_geometry(), by = c(
                 'setor_rn' = 'rn'
             )) %>%
-            rename(CodSetor = str_sub(code_tract, 12, 15)) %>%
+            mutate(CodSetor = str_sub(code_tract, 12, 15)) %>%
             mutate(CEP = as.character(CEP))
     } else if (mode == 2) {
         cnefe = cnefe %>%
@@ -179,8 +179,7 @@ normalize_cnefe = function(cnefe, mode = 0) {
             rename(TituloLogradouro = NM_TIT_LOG) %>%
             rename(NomeLogradouro = NM_LOG) %>%
             mutate(NumeroLogradouro = NA, IdEstabelecimento = NA, Localidade = NA, Lat = NA, Lon = NA, CEP = NA) %>%
-            mutate(Distrito = str_sub(CD_SETOR, 8, 9), Subdistrito = str_sub(CD_SETOR, 10, 11), CodSetor = str_sub(CD_SETOR, 12, 15)) %>%
-            st_centroid()
+            mutate(Distrito = str_sub(CD_SETOR, 8, 9), Subdistrito = str_sub(CD_SETOR, 10, 11), CodSetor = str_sub(CD_SETOR, 12, 15))
     }
     
     cnefe %>%
