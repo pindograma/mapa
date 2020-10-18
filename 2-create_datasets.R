@@ -156,8 +156,25 @@ save(ibge_agl, file = 'ibge_agl.Rdata')
 rm(ibge_agl)
 
 malha = list.files(path = 'data/fq2019', pattern = '*.shp', recursive = T, full.names = T) %>%
-    filter(TOT_RES != TOT_GERAL) %>%
-    map_dfr(function(x) st_read(x)) %>%
+    map(function(x) {
+        shape = st_read(x, type = 5) %>%
+            filter(!is.na(CD_QUADRA)) %>%
+            filter(TOT_RES != TOT_GERAL) %>%
+            group_by(CD_SETOR, NM_TIP_LOG, NM_TIT_LOG, NM_LOG) %>%
+            filter(row_number() == 1) %>%
+            ungroup()
+
+        tryCatch({
+            st_centroid(shape)
+        }, error = function(cond) {
+            shape %>%
+                filter(!is.na(st_is_valid(.))) %>%
+                st_centroid()
+        })
+    }) %>%
+    discard(function(x) nrow(x) == 0) %>%
+    data.table::rbindlist() %>%
+    st_as_sf() %>%
     normalize_cnefe(2)
 
 save(malha, file = 'malha2019.Rdata')
