@@ -139,7 +139,7 @@ cnefe_rural = read_delim('data/cnefe_agro/all.csv', ';', col_types = cols(
     VAL_COMP_ELEM5 = col_character(),
     NOM_TITULO_SEGLOGR = col_character())) %>%
     filter(!is.na(LATITUDE) & !is.na(LONGITUDE)) %>%
-    normalize_cnefe(T)
+    normalize_cnefe(1)
 save(cnefe_rural, file = 'cnefe_rural.Rdata')
 rm(cnefe_rural)
 
@@ -155,7 +155,9 @@ ibge_agl = st_read('data/ibge/loc_aglomerado_rural_isolado_p.shp') %>%
 save(ibge_agl, file = 'ibge_agl.Rdata')
 rm(ibge_agl)
 
-malha_shapes = list.files(path = 'data/fq2019', pattern = '*.shp', recursive = T, full.names = T)
-malha = map_dfr(malha_shapes, function(x) st_read(x))
-save(malha, file = 'malha2019.Rdata')
+malha = list.files(path = 'data/fq2019', pattern = '*.shp', recursive = T, full.names = T) %>%
+    filter(TOT_RES != TOT_GERAL) %>%
+    map_dfr(function(x) st_read(x)) %>%
+    normalize_cnefe(2)
 
+save(malha, file = 'malha2019.Rdata')

@@ -144,8 +144,8 @@ st_unlist_2 = function(l) {
 }
 
 # FIXME: We need to deal with the ~9000 NA cases with st_within() at some point.
-normalize_cnefe = function(cnefe, is_rural = F) {
-    if (is_rural) {
+normalize_cnefe = function(cnefe, mode = 0) {
+    if (mode == 1) {
         all_tracts = read_census_tract(code_tract = 'all', year = 2010) %>%
             mutate(rn = row_number())
         
@@ -170,8 +170,17 @@ normalize_cnefe = function(cnefe, is_rural = F) {
             left_join(all_tracts %>% st_drop_geometry(), by = c(
                 'setor_rn' = 'rn'
             )) %>%
-            rename(CodSetor = code_tract) %>%
+            rename(CodSetor = str_sub(code_tract, 12, 15)) %>%
             mutate(CEP = as.character(CEP))
+    } else if (mode == 2) {
+        cnefe = cnefe %>%
+            mutate(UF = str_sub(CD_SETOR, 1, 2), Municipio = str_sub(CD_SETOR, 1, 7)) %>%
+            rename(TipoLogradouro = NM_TIP_LOG) %>%
+            rename(TituloLogradouro = NM_TIT_LOG) %>%
+            rename(NomeLogradouro = NM_LOG) %>%
+            mutate(NumeroLogradouro = NA, IdEstabelecimento = NA, Localidade = NA, Lat = NA, Lon = NA, CEP = NA) %>%
+            mutate(Distrito = str_sub(CD_SETOR, 8, 9), Subdistrito = str_sub(CD_SETOR, 10, 11), CodSetor = str_sub(CD_SETOR, 12, 15)) %>%
+            st_centroid()
     }
     
     cnefe %>%

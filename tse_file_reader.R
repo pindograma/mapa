@@ -4,6 +4,14 @@
 # This program is licensed under the GNU General Public License, version 3.
 # See the LICENSE file for details.
 
+open_tse = c(
+    '2012' = open_2012,
+    '2014' = open_2014,
+    '2016' = open_2016,
+    '2018' = open_2018,
+    '2020' = open_2020
+) 
+
 open_2012 = function() {
     local_2012 <- read_excel("data/local-votacao-2012.xlsx", sheet = "Plan2",
         col_types = c("text", 
