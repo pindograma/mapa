@@ -157,9 +157,10 @@ normalize_cnefe = function(cnefe, mode = 0) {
             mutate(epsg = get_epsg(Lat, Lon)) %>%
             group_split(epsg) %>%
             map_dfr(function(region) {
+                epsg_ = first(region$epsg)
                 region %>%
-                    st_transform(epsg) %>%
-                    st_join(st_transform(all_tracts, epsg), st_within) %>%
+                    st_transform(epsg_) %>%
+                    st_join(st_transform(all_tracts, epsg_), st_within) %>%
                     st_drop_geometry()
             }) %>%
             mutate(Distrito = str_sub(code_tract, 8, 9), Subdistrito = str_sub(code_tract, 10, 11), CodSetor = str_sub(code_tract, 12, 15)) %>%
@@ -171,9 +172,10 @@ normalize_cnefe = function(cnefe, mode = 0) {
             mutate(epsg = get_epsg(coords[,'Y'], coords[,'X'])) %>%
             group_split(epsg) %>%
             map_dfr(function(region) {
+                epsg_ = first(region$epsg)
                 region %>%
-                    st_transform(epsg) %>%
-                    st_join(st_transform(all_tracts, epsg), st_within) %>%
+                    st_transform(epsg_) %>%
+                    st_join(st_transform(all_tracts, epsg_), st_within) %>%
                     st_drop_geometry()
             }) %>%
             mutate(UF = str_sub(code_tract, 1, 2), Municipio = str_sub(code_tract, 1, 7)) %>%
