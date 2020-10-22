@@ -171,11 +171,11 @@ malha = list.files(path = 'data/fq2019', pattern = '*.shp', recursive = T, full.
             ungroup()
 
         tryCatch({
-            st_centroid(shape)
+            test = st_centroid(shape)
+            shape
         }, error = function(cond) {
             shape %>%
-                filter(!is.na(st_is_valid(.))) %>%
-                st_centroid()
+                filter(!is.na(st_is_valid(.)))
         })
     }) %>%
     discard(function(x) nrow(x) == 0) %>%

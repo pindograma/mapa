@@ -156,68 +156,37 @@ if (file.exists('cnefe_rural_last_backup.Rdata') & arguments$usebackup) {
 }
 
 print('Matching with CNEFE 2010 address data...')
-load('cnefe_all.Rdata')
 if (file.exists('cnefe_addr_last_backup.Rdata') & arguments$usebackup) {
     load('cnefe_addr_last_backup.Rdata')
 } else {
+    load('cnefe_all.Rdata')
     cnefe_addr = run_address_match(
         local_2018_f %>% filter(uf != 'DF'),
         cnefe_all)
+    rm(cnefe_all)
     save(cnefe_addr, file = 'cnefe_addr_last_backup.Rdata')
 }
-
-print('Matching with CNEFE 2010 address data (approx)...')
-if (file.exists('cnefe_addr_approx_last_backup.Rdata') & arguments$usebackup) {
-    load('cnefe_addr_approx_last_backup.Rdata')
-} else {
-    cnefe_addr_approx = run_address_match(
-        local_2018_f %>% filter(uf != 'DF') %>% anti_join(cnefe_addr, 'ID'),
-        cnefe_all,
-        fun = do_address_matching_approx
-    ) %>%
-        rename(approx_ad_Distrito = ad_Distrito, approx_ad_Subdistrito = ad_Subdistrito,
-               approx_ad_CodSetor = ad_CodSetor)
-    save(cnefe_addr_approx, file = 'cnefe_addr_approx_last_backup.Rdata')
-}
-
-rm(cnefe_all)
-
-print('Matching with CNEFE 2019 address data...')
-load('malha2019.Rdata')
-if (file.exists('cnefe_malha_last_backup.Rdata') & arguments$usebackup) {
-    load('cnefe_malha_last_backup.Rdata')
-} else {
-    cnefe_malha = run_address_match(
-      local_2018_f %>% filter(uf != 'DF'),
-      malha,
-      is_rural = T)
-    save(cnefe_malha, file = 'cnefe_malha_last_backup.Rdata')
-}
-cnefe_malha = bind_rows(cnefe_malha, cnefe_malha_2) %>%
-    rename(malha_Distrito = ad_Distrito) %>%
-    rename(malha_Subdistrito = ad_Subdistrito) %>%
-    rename(malha_CodSetor = ad_CodSetor)
-
-print('Matching with CNEFE 2019 address data (approx)...')
-if (file.exists('cnefe_malha_2_last_backup.Rdata') & arguments$usebackup) {
-  load('cnefe_malha_2_last_backup.Rdata')
-} else {
-  cnefe_malha_2 = run_address_match(
-    local_2018_f %>% filter(uf != 'DF') %>% anti_join(cnefe_malha, 'ID'),
-    malha,
-    fun = do_address_matching_approx,
-    is_rural = T)
-  save(cnefe_malha_2, file = 'cnefe_malha_2_last_backup.Rdata')
-}
-cnefe_malha_2 = cnefe_malha_2 %>%
-    rename(approx_malha_Distrito = ad_Distrito) %>%
-    rename(approx_malha_Subdistrito = ad_Subdistrito) %>%
-    rename(approx_malha_CodSetor = ad_CodSetor)
 
 print('Matching with IBGE approximate data...')
 load('ibge_agl.Rdata')
 ibge_addr_approx = run_ibge_agl_match(local_2018_f, ibge_agl)
 rm(ibge_agl)
+
+print('Matching with CNEFE 2019 address data...')
+if (file.exists('cnefe_malha_last_backup.Rdata') & arguments$usebackup) {
+    load('cnefe_malha_last_backup.Rdata')
+} else {
+    load('malha2019.Rdata')
+    cnefe_malha = run_address_match(
+        local_2018_f %>% filter(uf != 'DF'),
+        malha,
+        is_rural = T)
+    save(cnefe_malha, file = 'cnefe_malha_last_backup.Rdata')
+}
+cnefe_malha = cnefe_malha %>%
+    rename(malha_Distrito = ad_Distrito) %>%
+    rename(malha_Subdistrito = ad_Subdistrito) %>%
+    rename(malha_CodSetor = ad_CodSetor)
 
 matched1 = bind_rows(
     local_2018_f %>% filter(!is.na(tse_lat) & !is.na(tse_lon)),
@@ -233,10 +202,8 @@ matched1 = bind_rows(
     ),
     inner_join(local_2018_f, cnefe_pl, by = c('ID' = 'ID')),
     inner_join(local_2018_f, cnefe_addr, by = c('ID' = 'ID')),
-    inner_join(local_2018_f, cnefe_addr_approx, by = c('ID' = 'ID')),
-    inner_join(local_2018_f, cnefe_rural_addr, by = c('ID' = 'ID')) %>% select(-ad_lon, -ad_lat),
+    inner_join(local_2018_f, cnefe_rural_addr, by = c('ID' = 'ID')),
     inner_join(local_2018_f, cnefe_malha, by = c('ID' = 'ID')),
-    inner_join(local_2018_f, cnefe_malha_2, by = c('ID' = 'ID')),
     sc %>% filter(!is.na(inep_lat) & !is.na(inep_lon)),
     ibge_addr_approx
 )
@@ -250,53 +217,26 @@ matched_grouped_1 = matched1 %>%
         bairro = fo(bairro),
         endereco = fo(endereco),
         
-        local = fo(local),
-        codigo_ibge = fo(codigo_ibge),
+        norm_google_cidade = fo(norm_google_cidade),
+        norm_google_bairro = fo(norm_google_bairro),
+        norm_google_endr = fo(norm_google_endr),
         
         tse_lat = fo(tse_lat),
-        tse_lon = fo(tse_lon),
         comp_tse_lat = fo(comp_tse_lat),
-        comp_tse_lon = fo(comp_tse_lon),
         inep_lat = fo(inep_lat),
-        inep_lon = fo(inep_lon),
-        ad_lat = fo(ad_lat),
-        ad_lon = fo(ad_lon),
-        pl_lat = fo(pl_lat),
-        pl_lon = fo(pl_lon),
         local_lat = fo(local_lat),
-        local_lon = fo(local_lon),
-        places_lat = fo(places_lat),
-        places_lon = fo(places_lon),
-        
-        pl_Distrito = fo(pl_Distrito),
-        pl_Subdistrito = fo(pl_Subdistrito),
         pl_CodSetor = fo(pl_CodSetor),
-        
-        ad_Distrito = fo(ad_Distrito),
-        ad_Subdistrito = fo(ad_Subdistrito),
         ad_CodSetor = fo(ad_CodSetor),
-        
-        rural_Distrito = fo(rural_Distrito),
-        rural_Subdistrito = fo(rural_Subdistrito),
         rural_CodSetor = fo(rural_CodSetor),
-        
-        approx_ad_Distrito = fo(approx_ad_Distrito),
-        approx_ad_Subdistrito = fo(approx_ad_Subdistrito),
-        approx_ad_CodSetor = fo(approx_ad_CodSetor),
-        
-        ibge_approx_lon = fo(ibge_approx_lon),
-        ibge_approx_lat = fo(ibge_approx_lat),
-        
-        malha_Distrito = fo(malha_Distrito),
-        malha_Subdistrito = fo(malha_Subdistrito),
-        malha_CodSetor = fo(malha_CodSetor)) %>%
-    mutate(results =
-      (!is.na(tse_lat) | !is.na(comp_tse_lat)) +
-      (!is.na(inep_lat)) +
-      (!is.na(pl_CodSetor)) +
-      (!is.na(ad_CodSetor)) +
-      (!is.na(rural_CodSetor)) +
-      (!is.na(local_lat)) +
-      (!is.na(malha_CodSetor)))
+        malha_CodSetor = fo(malha_CodSetor)
+
+matched_grouped_1 = matched_grouped_1 %>% mutate(results =
+    (!is.na(tse_lat) | !is.na(comp_tse_lat)) +
+    (!is.na(inep_lat)) +
+    (!is.na(pl_CodSetor)) +
+    (!is.na(ad_CodSetor)) +
+    (!is.na(rural_CodSetor)) +
+    (!is.na(local_lat)) +
+    (!is.na(malha_CodSetor)))
 
 save(matched_grouped_1, file = paste0('output_', arguments$year, '_without_google.Rdata'))
