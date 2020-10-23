@@ -140,8 +140,7 @@ get_epsg = function(lat, lon) {
 
 # FIXME: We need to deal with the ~9000 NA cases with st_within() at some point.
 normalize_cnefe = function(cnefe, mode = 0) {
-    all_tracts = read_census_tract(code_tract = 'all', year = 2010) %>%
-        mutate(rn = row_number())
+    all_tracts = read_census_tract(code_tract = 'all', year = 2010)
     
     if (mode == 1) {
         cnefe = cnefe %>%
@@ -180,9 +179,13 @@ normalize_cnefe = function(cnefe, mode = 0) {
             map_dfr(function(region) {
                 epsg_ = first(region$epsg)
                 region %>%
+                    mutate(joinid = row_number()) %>%
                     st_transform(epsg_) %>%
-                    st_join(st_transform(all_tracts, epsg_), st_within) %>%
-                    st_drop_geometry()
+                    st_join(st_transform(all_tracts, epsg_), st_intersects) %>%
+                    group_by(joinid) %>%
+                    filter(n() == 1) %>%
+                    st_drop_geometry() %>%
+                    filter(!is.na(code_tract))
             }) %>%
             mutate(UF = str_sub(code_tract, 1, 2), Municipio = str_sub(code_tract, 1, 7)) %>%
             rename(TipoLogradouro = NM_TIP_LOG) %>%
