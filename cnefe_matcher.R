@@ -158,8 +158,12 @@ normalize_cnefe = function(cnefe, mode = 0) {
             map_dfr(function(region) {
                 epsg_ = first(region$epsg)
                 region %>%
+                    mutate(joinid = row_number()) %>%
                     st_transform(epsg_) %>%
                     st_join(st_transform(all_tracts, epsg_), st_within) %>%
+                    group_by(joinid) %>%
+                    filter(row_number() == 1) %>%
+                    ungroup() %>%
                     st_drop_geometry()
             }) %>%
             mutate(Distrito = str_sub(code_tract, 8, 9), Subdistrito = str_sub(code_tract, 10, 11), CodSetor = str_sub(code_tract, 12, 15)) %>%
