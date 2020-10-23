@@ -50,7 +50,7 @@ to_geocode = bind_rows(to_geocode_1, to_geocode_2)
 legacy_tried = tibble()
 google_tried = tibble()
 
-if (!arguments$ignorepast & (arguments$export_map_cn | arguments$export_map_sn)) {
+if (!arguments$ignorepast & (arguments$export_maps_cn | arguments$export_maps_sn)) {
     if (file.exists('data/google/legacy/original_to_geocode.csv')) {
         legacy_tried = read_csv('data/google/legacy/original_to_geocode.csv') %>%
             mutate(jnd = paste(ENDERECO, BAIRRO_LOCAL_VOT, LOCALIDADE_LOCAL_VOTACAO, SGL_UF) %>% str_squish())
