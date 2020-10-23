@@ -14,6 +14,7 @@ library(purrr)
 library(docopt)
 
 source('tse_file_reader.R')
+source('match_shared.R')
 source('google_matcher.R')
 
 doc = 'generate_google_missing.R
