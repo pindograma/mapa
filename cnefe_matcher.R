@@ -166,7 +166,13 @@ normalize_cnefe = function(cnefe, mode = 0) {
             mutate(Distrito = str_sub(code_tract, 8, 9), Subdistrito = str_sub(code_tract, 10, 11), CodSetor = str_sub(code_tract, 12, 15)) %>%
             mutate(CEP = as.character(CEP))
     } else if (mode == 2) {
-        coords = st_coordinates(cnefe)
+        coords = malha %>%
+            st_cast('POINT', group_or_split = F) %>%
+            group_by(CD_SETOR, CD_QUADRA, CD_FACE) %>%
+            filter(row_number() == 1) %>%
+            ungroup() %>%
+            filter(!is.na(CD_SETOR)) %>%
+            st_coordinates()
 
         cnefe = cnefe %>%
             mutate(epsg = get_epsg(coords[,'Y'], coords[,'X'])) %>%
