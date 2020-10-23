@@ -249,6 +249,10 @@ matched_grouped_1 = matched1 %>%
         cidade = fo(cidade),
         bairro = fo(bairro),
         endereco = fo(endereco),
+
+        norm_google_endr = fo(norm_google_endr),
+        norm_google_bairro = fo(norm_google_bairro),
+        norm_google_cidade = fo(norm_google_cidade),
         
         local = fo(local),
         codigo_ibge = fo(codigo_ibge),
