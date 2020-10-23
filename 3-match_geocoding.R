@@ -40,13 +40,11 @@ arguments = docopt(doc)
 
 # Code
 if (!is.null(arguments$recycle)) {
-  addr_current = read_csv(arguments$rf, col_types = cols(
-      ad_lat = col_character(),
-      ad_lon = col_character()
-  )) %>%
-    mutate(norm_local = normalize_place(local))
+    load(arguments$recycle)
+    matched_grouped_2 = matched_grouped_2 %>%
+        mutate(norm_local = normalize_place(local))
 } else {
-    addr_current = tibble(codigo_ibge = NA, norm_local = NA)
+    matched_grouped_2 = tibble(codigo_ibge = NA, norm_local = NA)
 }
 
 print('Normalizing TSE address data...')
@@ -69,7 +67,7 @@ if (file.exists('normalize_tse_last_backup.Rdata') & arguments$usebackup) {
         mutate(norm_local = normalize_place(local)) %>%
         mutate(norm_bairro = normalize_simple(bairro)) %>%
         mutate(norm_endr = normalize_address(endereco)) %>%
-        anti_join(addr_current, by = c(
+        anti_join(matched_grouped_2, by = c(
             'codigo_ibge' = 'codigo_ibge',
             'norm_local' = 'norm_local'
         )) %>%
