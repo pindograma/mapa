@@ -148,7 +148,7 @@ left = local_2018_f %>% filter(!(ID %in% matched3$ID))
 
 if (arguments$export_maps_sn) {
     to_geocode_2 = generate_addr_export(left, allow_sn = T)
-    if (!google_full_reset) {
+    if (!arguments$ignorepast) {
         to_geocode_2 = to_geocode_2 %>%
             mutate(jnd = paste(endereco, bairro, cidade, uf) %>% str_squish()) %>%
             mutate(jnd2 = paste(revert_unidecode_damage(endereco), bairro, cidade, uf) %>% str_squish()) %>%
@@ -162,7 +162,7 @@ if (arguments$export_maps_sn) {
 google_approx = tibble()
 legacy_approx = tibble()
 
-if (!google_full_reset) {
+if (!arguments$ignorepast) {
     approx_files = list.files(
         path = 'data/google/geocoder-filtered-output',
         pattern = '*_approx.csv',
