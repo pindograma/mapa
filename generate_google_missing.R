@@ -22,7 +22,7 @@ Usage:
   generate_google_missing.R export_maps_cn --data=<data> --local=<local> [--ignorepast]
   generate_google_missing.R export_maps_sn --data=<data> --local=<local> [--ignorepast]
   generate_google_missing.R export_places --data=<data> --local=<local> [--ignorepast]
-  generate_google_missing.R create --data=<data> --local=<local>
+  generate_google_missing.R create <year> --data=<data> --local=<local>
 
 Options:
   -h --help                 Show this screen.
@@ -49,24 +49,26 @@ to_geocode = bind_rows(to_geocode_1, to_geocode_2)
 legacy_tried = tibble()
 google_tried = tibble()
 
+if (!arguments$ignorepast & (arguments$export_map_cn | arguments$export_map_sn)) {
+    if (file.exists('data/google/legacy/original_to_geocode.csv')) {
+        legacy_tried = read_csv('data/google/legacy/original_to_geocode.csv') %>%
+            mutate(jnd = paste(ENDERECO, BAIRRO_LOCAL_VOT, LOCALIDADE_LOCAL_VOTACAO, SGL_UF) %>% str_squish())
+    }
+
+    if (file.exists('data/google/geocoder-filtered-output')) {
+        files = list.files(
+            path = 'data/google/geocoder-filtered-output',
+            pattern = '*.csv',
+            full.names = T,
+            recursive = F)
+        
+        google_tried = map_dfr(files, read_csv) %>%
+            mutate(jnd = paste(endr_orig, bairro_orig, cidade, uf) %>% str_squish())
+    } 
+}
+
 if (arguments$export_maps_cn) {
     if (!arguments$ignorepast) {
-        if (file.exists('data/google/legacy/original_to_geocode.csv')) {
-            legacy_tried = read_csv('data/google/legacy/original_to_geocode.csv') %>%
-                mutate(jnd = paste(ENDERECO, BAIRRO_LOCAL_VOT, LOCALIDADE_LOCAL_VOTACAO, SGL_UF) %>% str_squish())
-        }
-
-        if (file.exists('data/google/geocoder-filtered-output')) {
-            files = list.files(
-                path = 'data/google/geocoder-filtered-output',
-                pattern = '*.csv',
-                full.names = T,
-                recursive = F)
-            
-            google_tried = map_dfr(files, read_csv) %>%
-                mutate(jnd = paste(endr_orig, bairro_orig, cidade, uf) %>% str_squish())
-        } 
-
         to_geocode = to_geocode %>%
             mutate(jnd = paste(endereco, bairro, cidade, uf) %>% str_squish()) %>%
             mutate(jnd2 = paste(norm_google_endr, bairro, cidade, uf) %>% str_squish()) %>%
@@ -94,7 +96,6 @@ google_geocoded = map_dfr(files, read_csv)
 gmatch_legacy = match_geocoded_legacy(local_2018_f, google_legacy)
 gmatch = match_geocoded(local_2018_f, google_geocoded)
 
-# TODO
 matched2 = bind_rows(matched1, gmatch_legacy, gmatch)
 
 local_2018_f = local_2018_f %>%
@@ -122,7 +123,7 @@ if (arguments$export_places) {
     stop('Generated file successfully (R will not let me stop execution without saying this is an error, but it is not an error).')
 }
 
-gpl = read_csv('gplaces2.csv', col_types = cols( ID = col_skip() )) %>%
+gpl = read_csv('data/google/gplaces2.csv', col_types = cols( ID = col_skip() )) %>%
     filter(matched == 1)
 
 pmatch = bind_rows(
@@ -175,10 +176,7 @@ gmatch_approx = match_geocoded(left, google_approx)
 gapprox = bind_rows(gmatch_legacy_approx, gmatch_approx) %>%
     rename(google_approx_lat = google_lat, google_approx_lon = google_lon)
 
-matched4 = bind_rows(
-    matched3,
-    inner_join(left, cnefe_addr_approx, by = c('ID' = 'ID')),
-    gapprox)
+matched4 = bind_rows(matched3, gapprox)
 
 fo = function(x) { first(x, order_by=x) }
 matched_grouped_2 = matched4 %>%
@@ -241,4 +239,4 @@ matched_grouped_2 = matched_grouped_2 %>% mutate(results =
     (!is.na(google_lat)) +
     (!is.na(places_lat)))
 
-matched_grouped_2 %>% write.csv('OUTPUT_2012.csv', row.names = F)
+save(list = c('matched4', 'matched_grouped_2'), file = paste0('output_', arguments$year, '_with_google.Rdata'))

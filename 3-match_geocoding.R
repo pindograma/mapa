@@ -265,8 +265,6 @@ matched_grouped_1 = matched1 %>%
         pl_lon = fo(pl_lon),
         local_lat = fo(local_lat),
         local_lon = fo(local_lon),
-        places_lat = fo(places_lat),
-        places_lon = fo(places_lon),
         
         pl_Distrito = fo(pl_Distrito),
         pl_Subdistrito = fo(pl_Subdistrito),
@@ -301,4 +299,4 @@ matched_grouped_1 = matched1 %>%
       #(!is.na(malha_CodSetor))
     )
 
-save(matched_grouped_1, file = paste0('output_', arguments$year, '_without_google.Rdata'))
+save(list = c('matched1', 'matched_grouped_1'), file = paste0('output_', arguments$year, '_without_google.Rdata'))
