@@ -38,6 +38,7 @@ open_2010 = function() {
         rename(cidade = `Município`) %>%
         rename(bairro = Bairro) %>%
         rename(endereco = `Endereço`) %>%
+        mutate(CEP = str_pad(CEP, 8, pad = '0')) %>%
         mutate(tse_lat = NA, tse_lon = NA) %>%
         rename(zona = `Zona Eleitoral`, secao = `Seção`) %>%
         select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
