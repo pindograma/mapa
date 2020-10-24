@@ -4,13 +4,53 @@
 # This program is licensed under the GNU General Public License, version 3.
 # See the LICENSE file for details.
 
+open_2008 = function() {
+    correspondencia = read_csv('data/municipios_brasileiros_tse.csv') %>%
+        select(codigo_tse, codigo_ibge)
+    
+    read_csv2('data/local-votacao-2008.csv', col_types = cols(
+        CD_CEP_LOCAL_VOTACAO = col_character()
+    ), locale = locale(encoding = 'Latin1')) %>%
+        mutate(ano = 2008) %>%
+        left_join(correspondencia, by = c('CD_LOCALIDADE_TSE_ZONA' = 'codigo_tse')) %>%
+        rename(local = NM_LOCAL_VOTACAO) %>%
+        rename(uf = SG_UF) %>%
+        rename(cidade = NM_LOCALIDADE_ZONA) %>%
+        rename(bairro = NM_BAIRRO_LOCVT) %>%
+        rename(endereco = DS_ENDERECO_LOCAL_VOTACAO) %>%
+        rename(CEP = CD_CEP_LOCAL_VOTACAO) %>%
+        mutate(tse_lat = NA, tse_lon = NA) %>%
+        rename(zona = NR_ZONA, secao = NR_SECAO) %>%
+        select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
+               tse_lat, tse_lon, CEP, zona, secao)
+}
+
+open_2010 = function() {
+    correspondencia = read_csv('data/municipios_brasileiros_tse.csv') %>%
+        select(nome_municipio, codigo_ibge)
+
+    read_csv2('data/local-votacao-2010.csv', col_types = cols(CEP = col_character())) %>%
+        mutate(ano = 2010) %>%
+        mutate(`Município` = ifelse(`Município` == 'EMBU', 'EMBU DAS ARTES', `Município`)) %>%
+        left_join(correspondencia, by = c('Município' = 'nome_municipio')) %>%
+        rename(local = Nome) %>%
+        rename(uf = UF) %>%
+        rename(cidade = `Município`) %>%
+        rename(bairro = Bairro) %>%
+        rename(endereco = `Endereço`) %>%
+        mutate(tse_lat = NA, tse_lon = NA) %>%
+        rename(zona = `Zona Eleitoral`, secao = `Seção`) %>%
+        select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
+               tse_lat, tse_lon, CEP, zona, secao)
+}
+
 open_2012 = function() {
     local_2012 <- read_excel("data/local-votacao-2012.xlsx", sheet = "Plan2",
         col_types = c("text", 
-            "numeric", "numeric", "numeric", 
+            "numeric", "numeric", "text", 
             "text", "numeric", "text", "text", 
-            "numeric", "text", "text", "skip", 
-            "text", "text", "numeric", "text", 
+            "skip", "skip", "text", "skip", 
+            "text", "text", "text", "text", 
             "text"))
     
     local_2012 %>%
@@ -21,8 +61,7 @@ open_2012 = function() {
         rename(cidade = NM_MUNIC_IBGE) %>%
         rename(bairro = NM_BAIRRO) %>%
         rename(endereco = ENDERECO_LOCALVOTACAO) %>%
-        rename(CEP = NUM_CEP) %>%
-        mutate(CEP = as.character(CEP)) %>%
+        mutate(CEP = str_pad(NUM_CEP, 8, pad = '0')) %>%
         mutate(tse_lat = NA, tse_lon = NA) %>%
         rename(zona = ZONA, secao = SECAO) %>%
         select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
@@ -47,7 +86,7 @@ open_2014 = function() {
         rename(cidade = NM_MUNIC_IBGE) %>%
         rename(bairro = NM_BAIRRO) %>%
         rename(endereco = ENDERECO_LOCALVOTACAO) %>%
-        rename(CEP = NUM_CEP) %>%
+        mutate(CEP = str_pad(NUM_CEP, 8, pad = '0')) %>%
         mutate(tse_lat = NA, tse_lon = NA) %>%
         rename(zona = ZONA, secao = SECAO) %>%
         select(ano, local, codigo_ibge, uf, cidade, bairro, endereco,
@@ -124,6 +163,8 @@ open_2020 = function() {
 }
 
 open_tse = c(
+    '2008' = open_2008,
+    '2010' = open_2010,
     '2012' = open_2012,
     '2014' = open_2014,
     '2016' = open_2016,
