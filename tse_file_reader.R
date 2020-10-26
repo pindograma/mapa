@@ -27,12 +27,12 @@ open_2008 = function() {
 
 open_2010 = function() {
     correspondencia = read_csv('data/municipios_brasileiros_tse.csv') %>%
-        select(nome_municipio, codigo_ibge)
+        select(uf, nome_municipio, codigo_ibge)
 
     read_csv2('data/local-votacao-2010.csv', col_types = cols(CEP = col_character())) %>%
         mutate(ano = 2010) %>%
         mutate(`Município` = ifelse(`Município` == 'EMBU', 'EMBU DAS ARTES', `Município`)) %>%
-        left_join(correspondencia, by = c('Município' = 'nome_municipio')) %>%
+        left_join(correspondencia, by = c('UF' = 'uf', 'Município' = 'nome_municipio')) %>%
         rename(local = Nome) %>%
         rename(uf = UF) %>%
         rename(cidade = `Município`) %>%
