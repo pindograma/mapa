@@ -4,11 +4,8 @@
 # This program is licensed under the GNU General Public License, version 3.
 # See the LICENSE file for details.
 
-library(readr)
+library(tidyverse)
 library(readxl)
-library(dplyr)
-library(stringi)
-library(stringr)
 
 source('tse_file_reader.R')
 source('match_shared.R')
@@ -37,4 +34,6 @@ geocoded_secoes_orig = inner_join(all_years, addr_current, by = c(
     filter(n() == 1) %>%
     ungroup() %>%
     select(-norm_local, -ID_n, -endereco)
+
+saveRDS(geocoded_secoes_orig, 'final_output.rda')
 
