@@ -147,9 +147,8 @@ open_2020 = function() {
     correspondencia = read_csv('data/municipios_brasileiros_tse.csv') %>%
         select(codigo_tse, codigo_ibge)
 
-    local_2020 = read_csv('data/local-votacao-2020-nov.csv',
-        col_types = cols(COD_OBJETO_PAIS = col_character()),
-        locale = locale(decimal_mark = ','))
+    local_2020 = read_delim('data/local-votacao-2020-nov.csv', ';',
+        locale = locale(decimal_mark = '.'))
     
     local_2020 %>%
         left_join(correspondencia, by = c('CD_MUNICIPIO' = 'codigo_tse')) %>%
