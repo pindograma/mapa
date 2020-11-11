@@ -17,7 +17,8 @@ all_years = bind_rows(
     open_2012(),
     open_2014(),
     open_2016(),
-    open_2018()
+    open_2018(),
+    open_2020()
 ) %>%
     mutate(norm_local = normalize_place(local)) %>%
     select(ano, codigo_ibge, norm_local, uf, zona, secao) %>%
