@@ -148,7 +148,7 @@ open_2020 = function() {
         select(codigo_tse, codigo_ibge)
 
     local_2020 = read_delim('data/local-votacao-2020-nov.csv', ';',
-        locale = locale(decimal_mark = '.'))
+        locale = locale(decimal_mark = '.'), encoding = 'Latin1')
     
     local_2020 %>%
         left_join(correspondencia, by = c('CD_MUNICIPIO' = 'codigo_tse')) %>%
