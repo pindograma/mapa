@@ -160,6 +160,7 @@ open_2020 = function() {
         rename(endereco = DS_ENDERECO) %>%
         rename(CEP = NR_CEP) %>%
         rename(tse_lat = NR_LATITUDE, tse_lon = NR_LONGITUDE) %>%
+        mutate(tse_lat = ifelse(tse_lat == -1, NA, tse_lat), tse_lon = ifelse(tse_lon == -1, NA, tse_lon)) %>%
         rename(zona = NR_ZONA, secao = NR_SECAO) %>% 
         select(local, codigo_ibge, uf, cidade, bairro, endereco,
                tse_lat, tse_lon, CEP, zona, secao)
