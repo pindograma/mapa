@@ -144,21 +144,24 @@ open_2018 = function() {
 }
 
 open_2020 = function() {
-    local_2020 = read_csv('data/local-votacao-2020-jun.csv',
+    correspondencia = read_csv('data/municipios_brasileiros_tse.csv') %>%
+        select(codigo_tse, codigo_ibge)
+
+    local_2020 = read_csv('data/local-votacao-2020-nov.csv',
         col_types = cols(COD_OBJETO_PAIS = col_character()),
         locale = locale(decimal_mark = ','))
     
     local_2020 %>%
+        left_join(correspondencia, by = c('CD_MUNICIPIO' = 'codigo_tse')) %>%
         mutate(ano = 2020) %>%
-        rename(local = NOM_LOCVOT) %>%
-        rename(codigo_ibge = COD_LOCALIDADE_IBGE) %>%
-        rename(uf = SGL_UF) %>%
-        rename(cidade = NOM_LOCALIDADE) %>%
-        rename(bairro = NOM_BAIRRO) %>%
-        rename(endereco = DES_ENDERECO) %>%
-        rename(CEP = NUM_CEP) %>%
-        rename(tse_lat = NUM_LATITUDE, tse_lon = NUM_LONGITUDE) %>%
-        rename(zona = NUM_ZONA, secao = NUM_SECAO) %>% 
+        rename(local = NM_LOCAL_VOTACAO) %>%
+        rename(uf = SG_UF) %>%
+        rename(cidade = NM_MUNICIPIO) %>%
+        rename(bairro = NM_BAIRRO) %>%
+        rename(endereco = DS_ENDERECO) %>%
+        rename(CEP = NR_CEP) %>%
+        rename(tse_lat = NR_LATITUDE, tse_lon = NR_LONGITUDE) %>%
+        rename(zona = NR_ZONA, secao = NR_SECAO) %>% 
         select(local, codigo_ibge, uf, cidade, bairro, endereco,
                tse_lat, tse_lon, CEP, zona, secao)
 }

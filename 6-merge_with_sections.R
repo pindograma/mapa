@@ -5,6 +5,7 @@
 # See the LICENSE file for details.
 
 library(tidyverse)
+library(stringi)
 library(readxl)
 
 source('tse_file_reader.R')
