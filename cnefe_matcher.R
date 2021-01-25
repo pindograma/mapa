@@ -138,17 +138,11 @@ get_epsg = function(lat, lon) {
     )
 }
 
-st_unlist_2 = function(l) {
-    is.na(l) = lengths(l) == 0
-    map_int(l, function(x) x[[1]])
-}
-
 # FIXME: We need to deal with the ~9000 NA cases with st_within() at some point.
 normalize_cnefe = function(cnefe, mode = 0) {
+    all_tracts = read_census_tract(code_tract = 'all', year = 2010)
+    
     if (mode == 1) {
-        all_tracts = read_census_tract(code_tract = 'all', year = 2010) %>%
-            mutate(rn = row_number())
-        
         cnefe = cnefe %>%
             rename(UF = COD_UF, Municipio = COD_MUNICIPIO) %>%
             rename(TipoLogradouro = NOM_TIPO_SEGLOGR) %>%
@@ -158,28 +152,51 @@ normalize_cnefe = function(cnefe, mode = 0) {
             mutate(IdEstabelecimento = NA) %>%
             rename(Localidade = DSC_LOCALIDADE) %>%
             rename(Lat = LATITUDE, Lon = LONGITUDE) %>%
-            rename(Distrito = COD_DISTRITO, Subdistrito = COD_SUBDISTRITO) %>%
             st_as_sf(coords = c('Lon', 'Lat'), crs = 4674, remove = F) %>%
             mutate(epsg = get_epsg(Lat, Lon)) %>%
             group_split(epsg) %>%
             map_dfr(function(region) {
-                region %>% mutate(setor_rn = st_within(
-                    st_transform(., epsg), st_transform(all_tracts, epsg)
-                ) %>% st_unlist_2()) %>% st_drop_geometry()
+                epsg_ = first(region$epsg)
+                region %>%
+                    mutate(joinid = row_number()) %>%
+                    st_transform(epsg_) %>%
+                    st_join(st_transform(all_tracts, epsg_), st_within) %>%
+                    group_by(joinid) %>%
+                    filter(row_number() == 1) %>%
+                    ungroup() %>%
+                    st_drop_geometry()
             }) %>%
-            left_join(all_tracts %>% st_drop_geometry(), by = c(
-                'setor_rn' = 'rn'
-            )) %>%
-            mutate(CodSetor = str_sub(code_tract, 12, 15)) %>%
+            mutate(Distrito = str_sub(code_tract, 8, 9), Subdistrito = str_sub(code_tract, 10, 11), CodSetor = str_sub(code_tract, 12, 15)) %>%
             mutate(CEP = as.character(CEP))
     } else if (mode == 2) {
+        coords = malha %>%
+            st_cast('POINT', group_or_split = F) %>%
+            group_by(CD_SETOR, CD_QUADRA, CD_FACE) %>%
+            filter(row_number() == 1) %>%
+            ungroup() %>%
+            filter(!is.na(CD_SETOR)) %>%
+            st_coordinates()
+
         cnefe = cnefe %>%
-            mutate(UF = str_sub(CD_SETOR, 1, 2), Municipio = str_sub(CD_SETOR, 1, 7)) %>%
+            mutate(epsg = get_epsg(coords[,'Y'], coords[,'X'])) %>%
+            group_split(epsg) %>%
+            map_dfr(function(region) {
+                epsg_ = first(region$epsg)
+                region %>%
+                    mutate(joinid = row_number()) %>%
+                    st_transform(epsg_) %>%
+                    st_join(st_transform(all_tracts, epsg_), st_intersects) %>%
+                    group_by(joinid) %>%
+                    filter(n() == 1) %>%
+                    st_drop_geometry() %>%
+                    filter(!is.na(code_tract))
+            }) %>%
+            mutate(UF = str_sub(code_tract, 1, 2), Municipio = str_sub(code_tract, 1, 7)) %>%
             rename(TipoLogradouro = NM_TIP_LOG) %>%
             rename(TituloLogradouro = NM_TIT_LOG) %>%
             rename(NomeLogradouro = NM_LOG) %>%
             mutate(NumeroLogradouro = NA, IdEstabelecimento = NA, Localidade = NA, Lat = NA, Lon = NA, CEP = NA) %>%
-            mutate(Distrito = str_sub(CD_SETOR, 8, 9), Subdistrito = str_sub(CD_SETOR, 10, 11), CodSetor = str_sub(CD_SETOR, 12, 15))
+            mutate(Distrito = str_sub(code_tract, 8, 9), Subdistrito = str_sub(code_tract, 10, 11), CodSetor = str_sub(code_tract, 12, 15))
     }
     
     cnefe %>%

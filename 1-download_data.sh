@@ -3,15 +3,18 @@
 pushd data
 
 wget http://pindograma-dados.s3.amazonaws.com/mapa/polling-stations/local-votacao-2008.csv
+
 wget http://pindograma-dados.s3.amazonaws.com/mapa/polling-stations/local-votacao-2010.csv
+iconv -f latin1 -t utf-8 local-votacao-2010.csv > local-votacao-2010-2.csv
+mv local-votacao-2010-2.csv local-votacao-2010.csv
+
 wget http://pindograma-dados.s3.amazonaws.com/mapa/polling-stations/local-votacao-2012.xlsx
 wget http://pindograma-dados.s3.amazonaws.com/mapa/polling-stations/local-votacao-2014.csv
 wget http://pindograma-dados.s3.amazonaws.com/mapa/polling-stations/local-votacao-2016.csv
 wget http://pindograma-dados.s3.amazonaws.com/mapa/polling-stations/local-votacao-08-08-2018.csv
-wget http://pindograma-dados.s3.amazonaws.com/mapa/polling-stations/local-votacao-2020.csv
+wget http://pindograma-dados.s3.amazonaws.com/mapa/polling-stations/local-votacao-2020-nov.csv
 
 mv local-votacao-08-08-2018.csv local-votacao-2018-aug.csv
-mv local-votacao-2020.csv local-votacao-2020-jun.csv
 
 # INEP/Locais
 wget http://pindograma-dados.s3.amazonaws.com/mapa/escolas-geocoded/alagoas.csv
